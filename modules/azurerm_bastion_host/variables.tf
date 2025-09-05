@@ -21,7 +21,7 @@ variable "vnet_name" {
   type        = string
   
 }
-variable "subnet4" {
+variable "bastion_sub4" {
   description = "The name of the subnet to host the Bastion Host. This subnet must be named 'AzureBastionSubnet'"
   type        = string
   

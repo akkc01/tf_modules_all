@@ -23,11 +23,6 @@ variable "frontend_pool_ip_name" {
   
 }
 
-variable "frontend_pool_pip_id" {
-  description = "The ID of the Public IP Address for the Frontend IP Configuration"
-  type        = string
-  
-}
 
 variable "sku" {
   description = "The SKU of the Load Balancer. Possible values are 'Basic' and 'Standard'"

@@ -7,6 +7,7 @@ resource "azurerm_lb" "lb1" {
   frontend_ip_configuration {
     name                 = var.frontend_pool_ip_name
     public_ip_address_id = data.azurerm_public_ip.lb_pip2.id
+     private_ip_address_allocation = "Dynamic"
   }
 }
 

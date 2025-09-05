@@ -10,8 +10,14 @@ variable "rg_name" {
   
 }
 
-variable "backendpool_name" {
+variable "backend_pool_name" {
   description = "The name of the Backend Address Pool"
   type        = string
   
+}
+
+variable "vnet_name" {
+  description = "The name of the Virtual Network where the Backend Address Pool is located"
+  type        = string
+
 }
