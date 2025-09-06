@@ -22,7 +22,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss1" {
   }
 
   network_interface {
-    name    = "example"
+    name    = "networkinterface1"
     primary = true
 
     ip_configuration {
@@ -31,6 +31,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss1" {
       subnet_id = data.azurerm_subnet.vmss_sub7.id
       load_balancer_backend_address_pool_ids = [data.azurerm_lb_backend_address_pool.bepool3.id]
     }
+    network_security_group_id = data.azurerm_network_security_group.nsg1.id
   }
 
   computer_name_prefix = "vmss"
@@ -46,7 +47,7 @@ resource "azurerm_monitor_autoscale_setting" "autoscale1" {
   resource_group_name = var.rg_name
   location            = var.location
   target_resource_id  = azurerm_linux_virtual_machine_scale_set.vmss1.id
-  enabled             = true
+  #enabled             = true
 
   profile {
     name = "defaultProfile"
@@ -98,30 +99,30 @@ resource "azurerm_monitor_autoscale_setting" "autoscale1" {
     }
   }
 
-  notification {
-    email {
-      send_to_subscription_administrator    = false
-      send_to_subscription_co_administrator = false
-      # custom_emails                         = ["you@example.com"] # Optional
-    }
-    # webhook {
-    #   service_uri = "https://your-webhook-url.com" # Optional
-    # }
-  }
+  # notification {
+  #   email {
+  #     send_to_subscription_administrator    = false
+  #     send_to_subscription_co_administrator = false
+  #     # custom_emails                         = ["you@example.com"] # Optional
+  #   }
+  #   # webhook {
+  #   #   service_uri = "https://your-webhook-url.com" # Optional
+  #   # }
+  # }
 }
 
 
-# resource "azurerm_virtual_machine_scale_set_extension" "nginx_install" {
-#   name                         = "nginx-install"
-#   virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.vmss1.id
-#   publisher                   = "Microsoft.Azure.Extensions"
-#   type                        = "CustomScript"
-#   type_handler_version        = "2.1"
+resource "azurerm_virtual_machine_scale_set_extension" "nginx_install" {
+  name                         = "nginx-install"
+  virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.vmss1.id
+  publisher                   = "Microsoft.Azure.Extensions"
+  type                        = "CustomScript"
+  type_handler_version        = "2.1"
 
-#   settings = <<SETTINGS
-# {
-#   "commandToExecute": "sudo apt-get update && sudo apt-get install -y nginx git && git clone https://github.com/akkc01/devopsInsiders_dummy_site.git /tmp/site && sudo rm -rf /var/www/html/* && sudo cp -r /tmp/site/* /var/www/html/ && sudo systemctl restart nginx"
-# }
-# SETTINGS
-# }
+  settings = <<SETTINGS
+{
+  "commandToExecute": "sudo apt-get update && sudo apt-get install -y nginx git && git clone https://github.com/akkc01/devopsInsiders_dummy_site.git /tmp/site && sudo rm -rf /var/www/html/* && sudo cp -r /tmp/site/* /var/www/html/ && sudo systemctl restart nginx"
+}
+SETTINGS
+}
 

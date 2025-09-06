@@ -10,7 +10,7 @@ module "vnet" {
   vnet_name     = "VMSS-VNET"
   address_space = ["192.168.0.0/21"]
   location      = "eastasia"
-  rg_name       = "VMSS-RG"
+  rg_name       = module.rg.rg_name
 }
 
 module "subnet" {
@@ -19,8 +19,9 @@ module "subnet" {
   subnet1          = "VMSS-SUBNET1"
   subnet2          = "VMSS-SUBNET2"
   subnet3          = "AzureBastionSubnet"
-  rg_name          = "VMSS-RG"
-  vnet_name        = "VMSS-VNET"
+  rg_name          = module.rg.rg_name
+  vnet_name        = module.vnet.vnet_name
+  location         = "eastasia"
   subnet1_prefixes = ["192.168.1.0/24"]
   subnet2_prefixes = ["192.168.2.0/24"]
   subnet3_prefixes = ["192.168.3.0/24"]
@@ -31,7 +32,7 @@ module "public_ip" {
   source            = "../../modules/azurerm_public_ip"
   bastion_pip1_name = "VMSS-Bastion-PIP"
   lb_pip1_name      = "VMSS-LB-PIP"
-  rg_name           = "VMSS-RG"
+  rg_name           = module.rg.rg_name
   location          = "eastasia"
   allocation_method = "Static"
   sku               = "Standard"
@@ -42,11 +43,11 @@ module "nic" {
   source           = "../../modules/azurerm_nic"
   bastion_nic_name = "bastion-NIC1"
   lb_nic_name      = "lb-NIC1"
-  rg_name          = "VMSS-RG"
+  rg_name          = module.rg.rg_name
   location         = "eastasia"
-  vnet_name        = "VMSS-VNET"
-  bastion_sub5     = "VMSS-SUBNET1"
-  lb_sub6          = "VMSS-SUBNET1"
+  vnet_name        = module.vnet.vnet_name
+  bastion_sub5     = "AzureBastionSubnet"
+  lb_sub6          = module.subnet.subnet1
 
 }
 
@@ -55,7 +56,7 @@ module "nsg" {
   depends_on = [module.rg]
   source     = "../../modules/azurerm_nsg"
   nsg_name   = "VMSS-NSG"
-  rg_name    = "VMSS-RG"
+  rg_name    = module.rg.rg_name
   location   = "eastasia"
 }
 
@@ -65,26 +66,26 @@ module "nic_nsg_association" {
   nsg_name         = "VMSS-NSG"
   bastion_nic_name = "bastion-NIC1"
   lb_nic_name      = "lb-NIC1"
-  rg_name          = "VMSS-RG"
+  rg_name          = module.rg.rg_name
 }
 
 
-module "bastion" {
-  depends_on        = [module.rg, module.vnet, module.subnet, module.public_ip, module.nic, module.nsg, module.nic_nsg_association]
-  source            = "../../modules/azurerm_bastion_host"
-  bastion_name      = "VMSS-BASTION"
-  rg_name           = "VMSS-RG"
-  location          = "eastasia"
-  bastion_sub4      = "AzureBastionSubnet"
-  vnet_name         = "VMSS-VNET"
-  bastion_pip2_name = "VMSS-Bastion-PIP"
-}
+# module "bastion" {
+#   depends_on        = [module.rg, module.vnet, module.subnet, module.public_ip, module.nic, module.nsg, module.nic_nsg_association]
+#   source            = "../../modules/azurerm_bastion_host"
+#   bastion_name      = "VMSS-BASTION"
+#   rg_name           = "VMSS-RG"
+#   location          = "eastasia"
+#   bastion_sub4      = "AzureBastionSubnet"
+#   vnet_name         = "VMSS-VNET"
+#   bastion_pip2_name = "VMSS-Bastion-PIP"
+# }
 
 module "lb" {
   depends_on            = [module.rg, module.vnet, module.subnet, module.public_ip, module.nic, module.nsg, module.nic_nsg_association]
   source                = "../../modules/azurerm_lb"
   lb_name               = "VMSS-LB"
-  rg_name               = "VMSS-RG"
+  rg_name               = module.rg.rg_name
   location              = "eastasia"
   sku                   = "Standard"
   frontend_pool_ip_name = "VMSS-FrontendIP"
@@ -96,8 +97,8 @@ module "lb_backend_address_pool" {
   depends_on        = [module.lb]
   source            = "../../modules/azurerm_lb_backend_address_pool"
   lb_name           = "VMSS-LB"
-  rg_name           = "VMSS-RG"
-  vnet_name         = "VMSS-VNET"
+  rg_name           = module.rg.rg_name
+  vnet_name         = module.vnet.vnet_name
   backend_pool_name = "VMSS-BackendPool"
 
 }
@@ -107,7 +108,7 @@ module "lb_probe" {
   source            = "../../modules/azurerm_lb_probe"
   health_probe_name = "http-probe"
   lb_name           = "VMSS-LB"
-  rg_name           = "VMSS-RG"
+  rg_name           = module.rg.rg_name
 }
 
 module "lb_rule" {
@@ -116,7 +117,7 @@ module "lb_rule" {
   lb_rule_name          = "HTTP-RULE"
   frontend_pool_ip_name = "VMSS-FrontendIP"
   lb_name               = "VMSS-LB"
-  rg_name               = "VMSS-RG"
+  rg_name               = module.rg.rg_name
   backend_pool_name     = "VMSS-BackendPool"
   probe_id              = module.lb_probe.probe_id
 
@@ -126,16 +127,17 @@ module "vmss" {
   depends_on        = [module.rg, module.vnet, module.subnet, module.lb, module.lb_backend_address_pool, module.lb_probe, module.lb_rule]
   source            = "../../modules/azurerm_linux_virtual_machine_scale_set"
   vmss_name         = "VMSS-1"
-  rg_name           = "VMSS-RG"
+  rg_name           = module.rg.rg_name
   location          = "eastasia"
   sku               = "Standard_F2"
   admin_username    = "adminuser"
   admin_password    = "Devops@12345" # ⚠️ Strong password hona chahiye
-  vnet_name         = "VMSS-VNET"
-  vmss_sub7         = "VMSS-SUBNET1"
+  vnet_name         = module.vnet.vnet_name
+  vmss_sub7         = module.subnet.subnet1
   autoscale_name    = "VMSS-Autoscale"
   backend_pool_name = "VMSS-BackendPool"
   lb_name           = "VMSS-LB"
+  nsg_name          = "VMSS-NSG"
 
 }
 

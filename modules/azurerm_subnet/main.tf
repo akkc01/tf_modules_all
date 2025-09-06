@@ -1,5 +1,5 @@
 resource "azurerm_subnet" "sub1" {
-  name                 = var.subnet1
+  name                 = "dev-${var.subnet1}-${var.location}"
   resource_group_name  = var.rg_name
   virtual_network_name = var.vnet_name
   address_prefixes     = var.subnet1_prefixes
@@ -8,7 +8,7 @@ resource "azurerm_subnet" "sub1" {
 
 
 resource "azurerm_subnet" "sub2" {
-  name                 = var.subnet2
+  name                 = "dev-${var.subnet2}-${var.location}"
   resource_group_name  = var.rg_name
   virtual_network_name = var.vnet_name
   address_prefixes     = var.subnet2_prefixes
